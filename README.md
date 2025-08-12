@@ -1,10 +1,10 @@
-## Unblock-IP
+## UFW-Unblock-ip.sh
 
 This script unblocks a specified IP address using UFW (Uncomplicated Firewall), providing a JSON-formatted output for integration with security tools like OSSEC/Wazuh.
 
 ### Overview
 
-The `Unblock-IP` script checks if an IP address is currently blocked by UFW and removes the deny rule if present. It logs all actions and outputs the result in JSON format for active response workflows.
+The `UFW-Unblock-ip.sh` script checks if an IP address is currently blocked by UFW and removes the deny rule if present. It logs all actions and outputs the result in JSON format for active response workflows.
 
 ### Script Details
 
@@ -20,7 +20,7 @@ The `Unblock-IP` script checks if an IP address is currently blocked by UFW and 
 
 #### Command Line Execution
 ```bash
-ARG1="1.2.3.4" ./Unblock-IP
+ARG1="1.2.3.4" ./UFW-Unblock-ip.sh
 ```
 
 #### Parameters
@@ -29,7 +29,7 @@ ARG1="1.2.3.4" ./Unblock-IP
 |-----------|------|-------------|
 | `ARG1`    | string | The IP address to unblock (required) |
 | `LOG`     | string | `/var/ossec/active-response/active-responses.log` (output JSON log) |
-| `LogPath` | string | `/tmp/Unblock-IP.log` (detailed execution log) |
+| `LogPath` | string | `/tmp/UFW-Unblock-ip.sh.log` (detailed execution log) |
 | `LogMaxKB` | int | 100 | Maximum log file size in KB before rotation |
 | `LogKeep` | int | 5 | Number of rotated log files to retain |
 
@@ -57,7 +57,7 @@ ARG1="1.2.3.4" ./Unblock-IP
 {
   "timestamp": "2025-07-18T10:30:45.123Z",
   "host": "HOSTNAME",
-  "action": "Unblock-IP",
+  "action": "UFW-Unblock-ip.sh",
   "ip": "1.2.3.4",
   "status": "unblocked",
   "reason": "IP unblocked successfully",
@@ -70,7 +70,7 @@ ARG1="1.2.3.4" ./Unblock-IP
 {
   "timestamp": "2025-07-18T10:30:45.123Z",
   "host": "HOSTNAME",
-  "action": "Unblock-IP",
+  "action": "UFW-Unblock-ip.sh",
   "ip": "",
   "status": "error",
   "reason": "No IP provided",
@@ -99,7 +99,7 @@ ARG1="1.2.3.4" ./Unblock-IP
 #### Debugging
 Enable verbose logging:
 ```bash
-VERBOSE=1 ARG1="1.2.3.4" ./Unblock-IP
+VERBOSE=1 ARG1="1.2.3.4" ./UFW-Unblock-ip.sh
 ```
 
 ### Contributing
