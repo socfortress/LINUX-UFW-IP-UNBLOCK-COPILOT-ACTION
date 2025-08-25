@@ -32,42 +32,42 @@ RotateLog() {
 }
 
 RotateLog
-
-if ! rm -f "$LOG" 2>/dev/null; then
-  WriteLog "WARN" "Failed to clear $LOG (might be locked)"
-else
-  : > "$LOG"
-  WriteLog "INFO" "Active response log cleared for fresh run."
-fi
-
 WriteLog "INFO" "=== SCRIPT START : $ScriptName ==="
 
-IP="${ARG1:-}"
+# Prefer ARG1 from Velociraptor, fallback to positional $1
+IP="${ARG1:-${1:-}}"
 
-if [ -z "$IP" ]; then
+Status="error"
+Reason="No IP provided"
+
+if [ -z "${IP:-}" ]; then
   WriteLog "ERROR" "No IP address provided, exiting."
-  Status="error"
-  Reason="No IP provided"
 else
-  WriteLog "INFO" "Unblocking IP address: $IP"
-  # Check if rule exists
-  if ufw status | grep -qw "$IP"; then
-    if ufw delete deny from "$IP"; then
-      WriteLog "INFO" "Unblocked IP $IP successfully"
-      Status="unblocked"
-      Reason="IP unblocked successfully"
-    else
-      WriteLog "ERROR" "Failed to unblock IP $IP"
-      Status="failed"
-      Reason="ufw command failed"
-    fi
+  if ! command -v ufw >/dev/null 2>&1; then
+    WriteLog "ERROR" "ufw not installed or not in PATH"
+    Status="failed"
+    Reason="ufw not installed"
   else
-    WriteLog "INFO" "IP $IP is not currently blocked"
-    Status="not_blocked"
-    Reason="IP was not blocked"
+    WriteLog "INFO" "Unblocking IP address: $IP"
+    if ufw status | grep -qw "$IP"; then
+      if ufw delete deny from "$IP" >/dev/null 2>&1; then
+        WriteLog "INFO" "Unblocked IP $IP successfully"
+        Status="unblocked"
+        Reason="IP unblocked successfully"
+      else
+        WriteLog "ERROR" "Failed to unblock IP $IP"
+        Status="failed"
+        Reason="ufw command failed"
+      fi
+    else
+      WriteLog "INFO" "IP $IP is not currently blocked"
+      Status="not_blocked"
+      Reason="IP was not blocked"
+    fi
   fi
 fi
 
+# Build one-line NDJSON entry
 Timestamp=$(date --iso-8601=seconds 2>/dev/null || date -Iseconds)
 final_json=$(jq -n \
   --arg timestamp "$Timestamp" \
@@ -77,17 +77,9 @@ final_json=$(jq -n \
   --arg status "$Status" \
   --arg reason "$Reason" \
   --argjson copilot_action true \
-  '{
-    timestamp: $timestamp,
-    host: $host,
-    action: $action,
-    ip: $ip,
-    status: $status,
-    reason: $reason,
-    copilot_action: $copilot_action
-  }'
-)
+  '{timestamp:$timestamp,host:$host,action:$action,ip:$ip,status:$status,reason:$reason,copilot_action:$copilot_action}')
 
+# Atomic overwrite with .new fallback
 tmpfile=$(mktemp)
 echo "$final_json" > "$tmpfile"
 if ! mv -f "$tmpfile" "$LOG" 2>/dev/null; then
